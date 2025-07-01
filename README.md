@@ -9,7 +9,6 @@ An iOS/iPadOS app that generates descriptive alt text for images using OpenAI's 
   <img src="screenshots/iphone-main-view.png" alt="iPhone main view with image selection" width="250">
   <img src="screenshots/iphone-detail-levels.png" alt="iPhone detail level selection" width="250">
   <img src="screenshots/iphone-generated-text.png" alt="iPhone generated alt text result" width="250">
-  <img src="screenshots/iphone-settings.png" alt="iPhone settings screen" width="250">
 </div>
 
 ### iPad
