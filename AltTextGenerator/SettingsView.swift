@@ -13,6 +13,8 @@ struct SettingsView: View {
     @State private var showApiKey: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
+    @State private var hasAPIKey: Bool = false
+    @State private var autoCopyToClipboard: Bool = false
     
     var body: some View {
         NavigationView {
@@ -44,9 +46,10 @@ struct SettingsView: View {
                         }
                         
                         if !apiKey.isEmpty {
-                            HStack {
+                            HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
+                                    .frame(width: 16, height: 16)
                                 Text("API key entered")
                                     .font(.caption)
                                     .foregroundColor(.green)
@@ -64,6 +67,7 @@ struct SettingsView: View {
                             alertMessage = "Please enter an API key before saving"
                         } else if KeychainService.shared.save(trimmedKey) {
                             alertMessage = "API Key saved successfully! You can now generate alt text."
+                            hasAPIKey = true
                         } else {
                             alertMessage = "Failed to save API Key to secure storage"
                         }
@@ -75,20 +79,26 @@ struct SettingsView: View {
                         if KeychainService.shared.delete() {
                             apiKey = ""
                             alertMessage = "API Key removed successfully"
+                            hasAPIKey = false
                         } else {
                             apiKey = ""
                             alertMessage = "API Key cleared from field"
+                            hasAPIKey = false
                         }
                         showAlert = true
                     }
                     .foregroundColor(.red)
+                    
+                    Toggle("Auto-copy to clipboard", isOn: $autoCopyToClipboard)
+                        .toggleStyle(SwitchToggleStyle())
                 }
                 
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label("How to Get an API Key", systemImage: "questionmark.circle.fill")
-                            .font(.headline)
-                            .foregroundColor(.blue)
+                if !hasAPIKey {
+                    Section {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("How to Get an API Key")
+                                .font(.headline)
+                                .foregroundColor(.blue)
                         
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(alignment: .top, spacing: 12) {
@@ -157,20 +167,21 @@ struct SettingsView: View {
                             }
                         }
                         
-                        HStack {
+                        HStack(alignment: .center, spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.orange)
+                                .frame(width: 16, height: 16)
                             Text("Keep your API key private and secure")
                                 .font(.footnote)
                                 .foregroundColor(.orange)
                         }
-                        .padding(.top, 8)
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 12)
                         .background(Color.orange.opacity(0.1))
                         .cornerRadius(8)
+                        }
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 8)
                 }
                 
                 Section(footer: Text("Your API key is stored securely in the device keychain. You will need to add credits to your OpenAI account to use the API.")) {
@@ -190,7 +201,14 @@ struct SettingsView: View {
         .onAppear {
             if let savedKey = KeychainService.shared.retrieve() {
                 apiKey = savedKey
+                hasAPIKey = true
+            } else {
+                hasAPIKey = false
             }
+            autoCopyToClipboard = UserDefaults.standard.bool(forKey: "autoCopyToClipboard")
+        }
+        .onChange(of: autoCopyToClipboard) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: "autoCopyToClipboard")
         }
     }
 }

@@ -19,6 +19,7 @@ struct MainView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var hasAPIKey: Bool = false
     @State private var isCopied: Bool = false
+    @State private var autoCopyEnabled: Bool = false
     
     var body: some View {
         NavigationView {
@@ -29,7 +30,7 @@ struct MainView: View {
                         .scaledToFit()
                         .frame(maxHeight: 300)
                         .cornerRadius(10)
-                        .padding()
+                        .padding(.horizontal)
                 } else {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray.opacity(0.3))
@@ -43,7 +44,7 @@ struct MainView: View {
                                     .foregroundColor(.gray)
                             }
                         )
-                        .padding()
+                        .padding(.horizontal)
                 }
                 
                 PhotosPicker(
@@ -132,10 +133,12 @@ struct MainView: View {
             }
             .onAppear {
                 checkForAPIKey()
+                loadAutoCopySettings()
             }
             .onChange(of: showSettings) { _, newValue in
                 if !newValue {
                     checkForAPIKey()
+                    loadAutoCopySettings()
                 }
             }
         }
@@ -143,6 +146,10 @@ struct MainView: View {
     
     private func checkForAPIKey() {
         hasAPIKey = KeychainService.shared.retrieve() != nil
+    }
+    
+    private func loadAutoCopySettings() {
+        autoCopyEnabled = UserDefaults.standard.bool(forKey: "autoCopyToClipboard")
     }
     
     private func generateAltText() {
@@ -157,6 +164,11 @@ struct MainView: View {
                 await MainActor.run {
                     self.generatedText = altText
                     self.isLoading = false
+                    
+                    // Auto-copy to clipboard if enabled
+                    if self.autoCopyEnabled {
+                        self.copyToClipboard()
+                    }
                 }
             } catch {
                 await MainActor.run {
