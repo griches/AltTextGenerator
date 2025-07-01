@@ -20,6 +20,48 @@ struct MainView: View {
     @State private var hasAPIKey: Bool = false
     @State private var isCopied: Bool = false
     @State private var autoCopyEnabled: Bool = false
+    @State private var autoGenerateEnabled: Bool = false
+    
+    private var generateButtonAccessibilityHint: String {
+        selectedImage == nil ? "Select an image first to generate alt text" : "Uses AI to create a description of your selected image"
+    }
+    
+    private var generatedTextSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Generated Alt Text:")
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+            
+            Text(generatedText)
+                .font(.body)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(10)
+                .accessibilityLabel("Generated alt text result")
+                .accessibilityValue(generatedText)
+                .accessibilityHint("This is the AI-generated description of your image")
+                .accessibilityIdentifier("generatedText")
+            
+            Button(action: copyToClipboard) {
+                HStack {
+                    Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
+                    Text(isCopied ? "Copied to Clipboard!" : "Copy to Clipboard")
+                        .font(.body)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(isCopied ? Color.green : Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .animation(.easeInOut(duration: 0.3), value: isCopied)
+            }
+            .accessibilityLabel(isCopied ? "Copied to clipboard" : "Copy to clipboard")
+            .accessibilityHint("Copies the generated alt text to your clipboard for pasting elsewhere")
+            .accessibilityIdentifier("copyButton")
+        }
+        .padding(.horizontal)
+        .accessibilityElement(children: .contain)
+    }
     
     var body: some View {
         NavigationView {
@@ -31,6 +73,9 @@ struct MainView: View {
                         .frame(maxHeight: 300)
                         .cornerRadius(10)
                         .padding(.horizontal)
+                        .accessibilityLabel("Selected image")
+                        .accessibilityHint("This is the image that will be analyzed to generate alt text")
+                        .accessibilityAddTraits(.isImage)
                 } else {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray.opacity(0.3))
@@ -38,13 +83,17 @@ struct MainView: View {
                         .overlay(
                             VStack {
                                 Image(systemName: "photo")
-                                    .font(.system(size: 50))
+                                    .font(.largeTitle)
                                     .foregroundColor(.gray)
                                 Text("No image selected")
+                                    .font(.body)
                                     .foregroundColor(.gray)
                             }
                         )
                         .padding(.horizontal)
+                        .accessibilityLabel("No image selected")
+                        .accessibilityHint("Tap 'Select Image' button below to choose an image from your photo library")
+                        .accessibilityAddTraits(.isStaticText)
                 }
                 
                 PhotosPicker(
@@ -52,6 +101,7 @@ struct MainView: View {
                     matching: .images,
                     photoLibrary: .shared()) {
                         Label("Select Image", systemImage: "photo")
+                            .font(.body)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue)
@@ -59,12 +109,20 @@ struct MainView: View {
                             .cornerRadius(10)
                     }
                     .padding(.horizontal)
+                    .accessibilityLabel("Select Image")
+                    .accessibilityHint("Opens your photo library to choose an image for alt text generation")
+                    .accessibilityIdentifier("selectImageButton")
                     .onChange(of: selectedItem) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self),
                                let image = UIImage(data: data) {
                                 selectedImage = image
                                 generatedText = ""
+                                
+                                // Auto-generate alt text if enabled
+                                if autoGenerateEnabled {
+                                    generateAltText()
+                                }
                             }
                         }
                     }
@@ -79,6 +137,7 @@ struct MainView: View {
                             .cornerRadius(10)
                     } else {
                         Label("Generate Alt Text", systemImage: "wand.and.rays")
+                            .font(.body)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(selectedImage != nil ? Color.green : Color.gray)
@@ -88,31 +147,13 @@ struct MainView: View {
                 }
                 .padding(.horizontal)
                 .disabled(selectedImage == nil || isLoading)
+                .accessibilityLabel(isLoading ? "Generating alt text" : "Generate Alt Text")
+                .accessibilityHint(generateButtonAccessibilityHint)
+                .accessibilityIdentifier("generateAltTextButton")
+                .accessibilityAddTraits(isLoading ? .updatesFrequently : [])
                 
                 if !generatedText.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Generated Alt Text:")
-                            .font(.headline)
-                        
-                        Text(generatedText)
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(10)
-                        
-                        Button(action: copyToClipboard) {
-                            HStack {
-                                Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
-                                Text(isCopied ? "Copied to Clipboard!" : "Copy to Clipboard")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(isCopied ? Color.green : Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .animation(.easeInOut(duration: 0.3), value: isCopied)
-                        }
-                    }
-                    .padding(.horizontal)
+                    generatedTextSection
                 }
                 
                 Spacer()
@@ -122,7 +163,10 @@ struct MainView: View {
                 showSettings = true
             }) {
                 Image(systemName: "gearshape")
-            })
+            }
+            .accessibilityLabel("Settings")
+            .accessibilityHint("Opens app settings to configure your OpenAI API key and preferences")
+            .accessibilityIdentifier("settingsButton"))
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
@@ -134,11 +178,13 @@ struct MainView: View {
             .onAppear {
                 checkForAPIKey()
                 loadAutoCopySettings()
+                loadAutoGenerateSettings()
             }
             .onChange(of: showSettings) { _, newValue in
                 if !newValue {
                     checkForAPIKey()
                     loadAutoCopySettings()
+                    loadAutoGenerateSettings()
                 }
             }
         }
@@ -150,6 +196,10 @@ struct MainView: View {
     
     private func loadAutoCopySettings() {
         autoCopyEnabled = UserDefaults.standard.bool(forKey: "autoCopyToClipboard")
+    }
+    
+    private func loadAutoGenerateSettings() {
+        autoGenerateEnabled = UserDefaults.standard.bool(forKey: "autoGenerateAltText")
     }
     
     private func generateAltText() {
@@ -164,6 +214,9 @@ struct MainView: View {
                 await MainActor.run {
                     self.generatedText = altText
                     self.isLoading = false
+                    
+                    // Announce completion to VoiceOver
+                    UIAccessibility.post(notification: .announcement, argument: "Alt text generated: \(altText)")
                     
                     // Auto-copy to clipboard if enabled
                     if self.autoCopyEnabled {
@@ -186,6 +239,9 @@ struct MainView: View {
     
     private func copyToClipboard() {
         UIPasteboard.general.string = generatedText
+        
+        // Announce to VoiceOver
+        UIAccessibility.post(notification: .announcement, argument: "Alt text copied to clipboard")
         
         // Animate the button change
         withAnimation(.easeInOut(duration: 0.3)) {

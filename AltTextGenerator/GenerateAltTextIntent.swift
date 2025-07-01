@@ -24,9 +24,24 @@ struct GenerateAltTextIntent: AppIntent {
     var image: IntentFile
     
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
-        guard let fileURL = image.fileURL,
-              let imageData = try? Data(contentsOf: fileURL),
-              let uiImage = UIImage(data: imageData) else {
+        
+        guard let fileURL = image.fileURL else {
+            throw GenerateAltTextError.failedToLoadImage
+        }
+        
+        // Start accessing the security-scoped resource
+        let accessing = fileURL.startAccessingSecurityScopedResource()
+        defer {
+            if accessing {
+                fileURL.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        guard let imageData = try? Data(contentsOf: fileURL) else {
+            throw GenerateAltTextError.failedToLoadImage
+        }
+        
+        guard let uiImage = UIImage(data: imageData) else {
             throw GenerateAltTextError.failedToLoadImage
         }
         
