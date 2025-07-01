@@ -10,13 +10,20 @@ import UIKit
 import UniformTypeIdentifiers
 
 struct GenerateAltTextIntent: AppIntent {
-    static var title: LocalizedStringResource = "Generate Alt Text"
+    static var title: LocalizedStringResource = "Alt Text"
     static var description = IntentDescription("Generate alt text for an image using AI")
+    static var parameterSummary: some ParameterSummary {
+        Summary("Generate alt text for \(\.$image)")
+    }
+    static var outputAttributionBundleIdentifier: String? = "mobi.bouncingball.AltTextGenerator"
     
-    @Parameter(title: "Image", supportedContentTypes: [.image])
+    @Parameter(title: "Image", 
+               description: "The image to generate alt text for",
+               supportedContentTypes: [.image],
+               inputConnectionBehavior: .connectToPreviousIntentResult)
     var image: IntentFile
     
-    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+    func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         guard let fileURL = image.fileURL,
               let imageData = try? Data(contentsOf: fileURL),
               let uiImage = UIImage(data: imageData) else {
@@ -25,7 +32,10 @@ struct GenerateAltTextIntent: AppIntent {
         
         do {
             let altText = try await OpenAIService.shared.generateAltText(for: uiImage)
-            return .result(value: altText)
+            return .result(
+                value: altText,
+                dialog: IntentDialog("\(altText)")
+            )
         } catch {
             throw GenerateAltTextError.failedToGenerateAltText(error.localizedDescription)
         }
@@ -55,7 +65,7 @@ struct AltTextGeneratorShortcuts: AppShortcutsProvider {
                 "Create alt text in \(.applicationName)",
                 "Describe image with \(.applicationName)"
             ],
-            shortTitle: "Generate Alt Text",
+            shortTitle: "Alt Text",
             systemImageName: "text.below.photo"
         )
     }

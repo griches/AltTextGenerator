@@ -18,6 +18,7 @@ struct MainView: View {
     @State private var alertMessage: String = ""
     @State private var selectedItem: PhotosPickerItem?
     @State private var hasAPIKey: Bool = false
+    @State private var isCopied: Bool = false
     
     var body: some View {
         NavigationView {
@@ -98,12 +99,16 @@ struct MainView: View {
                             .cornerRadius(10)
                         
                         Button(action: copyToClipboard) {
-                            Label("Copy to Clipboard", systemImage: "doc.on.doc")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                            HStack {
+                                Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
+                                Text(isCopied ? "Copied to Clipboard!" : "Copy to Clipboard")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(isCopied ? Color.green : Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .animation(.easeInOut(duration: 0.3), value: isCopied)
                         }
                     }
                     .padding(.horizontal)
@@ -169,8 +174,18 @@ struct MainView: View {
     
     private func copyToClipboard() {
         UIPasteboard.general.string = generatedText
-        alertMessage = "Alt text copied to clipboard!"
-        showAlert = true
+        
+        // Animate the button change
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isCopied = true
+        }
+        
+        // Reset after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isCopied = false
+            }
+        }
     }
 }
 
