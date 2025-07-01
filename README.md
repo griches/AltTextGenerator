@@ -2,6 +2,26 @@
 
 An iOS/iPadOS app that generates descriptive alt text for images using OpenAI's Vision API. Built with SwiftUI and designed with accessibility in mind.
 
+## Screenshots
+
+### iPhone
+<div align="center">
+  <img src="screenshots/iphone-main-view.png" alt="iPhone main view with image selection" width="250">
+  <img src="screenshots/iphone-detail-levels.png" alt="iPhone detail level selection" width="250">
+  <img src="screenshots/iphone-generated-text.png" alt="iPhone generated alt text result" width="250">
+  <img src="screenshots/iphone-settings.png" alt="iPhone settings screen" width="250">
+</div>
+
+### iPad
+<div align="center">
+  <img src="screenshots/ipad-main-view.png" alt="iPad main view with image selection" width="400">
+  <img src="screenshots/ipad-detail-levels.png" alt="iPad detail level selection" width="400">
+</div>
+<div align="center">
+  <img src="screenshots/ipad-generated-text.png" alt="iPad generated alt text result" width="400">
+  <img src="screenshots/ipad-settings.png" alt="iPad settings screen" width="400">
+</div>
+
 ## Features
 
 - **AI-Powered Alt Text Generation**: Uses OpenAI's GPT-4 Vision model to create detailed, accessible descriptions of images
