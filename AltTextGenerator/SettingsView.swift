@@ -18,7 +18,7 @@ struct SettingsView: View {
     @State private var autoGenerateAltText: Bool = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
@@ -238,12 +238,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .navigationBarItems(trailing: Button("Done") {
-                dismiss()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .accessibilityLabel("Done")
+                    .accessibilityHint("Closes settings and returns to the main screen")
+                    .accessibilityIdentifier("doneButton")
+                }
             }
-            .accessibilityLabel("Done")
-            .accessibilityHint("Closes settings and returns to the main screen")
-            .accessibilityIdentifier("doneButton"))
             .alert("Settings", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {

@@ -27,16 +27,20 @@ struct MainView: View {
     }
     
     private var generatedTextSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 15) {
+            let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+            
             Text("Generated Alt Text:")
-                .font(.headline)
+                .font(isIPad ? .title2 : .headline)
+                .fontWeight(.semibold)
                 .accessibilityAddTraits(.isHeader)
             
             Text(generatedText)
-                .font(.body)
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(10)
+                .font(isIPad ? .title3 : .body)
+                .padding(isIPad ? 20 : 15)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .cornerRadius(isIPad ? 15 : 10)
                 .accessibilityLabel("Generated alt text result")
                 .accessibilityValue(generatedText)
                 .accessibilityHint("This is the AI-generated description of your image")
@@ -45,14 +49,16 @@ struct MainView: View {
             Button(action: copyToClipboard) {
                 HStack {
                     Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
+                        .font(isIPad ? .title3 : .body)
                     Text(isCopied ? "Copied to Clipboard!" : "Copy to Clipboard")
-                        .font(.body)
+                        .font(isIPad ? .title3 : .body)
+                        .fontWeight(.medium)
                 }
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(isIPad ? 18 : 15)
                 .background(isCopied ? Color.green : Color.blue)
                 .foregroundColor(.white)
-                .cornerRadius(10)
+                .cornerRadius(isIPad ? 12 : 10)
                 .animation(.easeInOut(duration: 0.3), value: isCopied)
             }
             .accessibilityLabel(isCopied ? "Copied to clipboard" : "Copy to clipboard")
@@ -60,58 +66,74 @@ struct MainView: View {
             .accessibilityIdentifier("copyButton")
         }
         .padding(.horizontal)
+        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10)
         .accessibilityElement(children: .contain)
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                if let image = selectedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 300)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
-                        .accessibilityLabel("Selected image")
-                        .accessibilityHint("This is the image that will be analyzed to generate alt text")
-                        .accessibilityAddTraits(.isImage)
-                } else {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 300)
-                        .overlay(
-                            VStack {
-                                Image(systemName: "photo")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.gray)
-                                Text("No image selected")
-                                    .font(.body)
-                                    .foregroundColor(.gray)
-                            }
-                        )
-                        .padding(.horizontal)
-                        .accessibilityLabel("No image selected")
-                        .accessibilityHint("Tap 'Select Image' button below to choose an image from your photo library")
-                        .accessibilityAddTraits(.isStaticText)
-                }
+        NavigationStack {
+            GeometryReader { geometry in
+                let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+                let maxWidth: CGFloat = isIPad ? min(geometry.size.width * 0.8, 700) : 600
                 
-                PhotosPicker(
-                    selection: $selectedItem,
-                    matching: .images,
-                    photoLibrary: .shared()) {
-                        Label("Select Image", systemImage: "photo")
-                            .font(.body)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-                    .accessibilityLabel("Select Image")
-                    .accessibilityHint("Opens your photo library to choose an image for alt text generation")
-                    .accessibilityIdentifier("selectImageButton")
+                ScrollView {
+                    VStack(spacing: isIPad ? 30 : 20) {
+                        VStack(spacing: isIPad ? 25 : 20) {
+                            if let image = selectedImage {
+                                let imageAspectRatio = image.size.width / image.size.height
+                                let maxImageWidth = isIPad ? min(500, maxWidth - 80) : min(300 * imageAspectRatio, UIScreen.main.bounds.width - 40)
+                                let displayWidth = maxImageWidth
+                                let displayHeight = displayWidth / imageAspectRatio
+                                let maxHeight: CGFloat = isIPad ? 500 : 300
+                                
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: displayWidth, maxHeight: min(displayHeight, maxHeight))
+                                    .clipShape(RoundedRectangle(cornerRadius: isIPad ? 15 : 10))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                                    .padding(.horizontal)
+                                    .accessibilityLabel("Selected image")
+                                    .accessibilityHint("This is the image that will be analyzed to generate alt text")
+                                    .accessibilityAddTraits(.isImage)
+                            } else {
+                                RoundedRectangle(cornerRadius: isIPad ? 15 : 10)
+                                    .fill(Color(UIColor.systemGray6))
+                                    .frame(height: isIPad ? 400 : 300)
+                                    .overlay(
+                                        VStack(spacing: 15) {
+                                            Image(systemName: "photo")
+                                                .font(.system(size: isIPad ? 60 : 40))
+                                                .foregroundColor(.gray)
+                                            Text("No image selected")
+                                                .font(isIPad ? .title3 : .body)
+                                                .foregroundColor(.gray)
+                                        }
+                                    )
+                                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                                    .padding(.horizontal)
+                                    .accessibilityLabel("No image selected")
+                                    .accessibilityHint("Tap 'Select Image' button below to choose an image from your photo library")
+                                    .accessibilityAddTraits(.isStaticText)
+                            }
+                
+                            PhotosPicker(
+                                selection: $selectedItem,
+                                matching: .images,
+                                photoLibrary: .shared()) {
+                                    Label("Select Image", systemImage: "photo")
+                                        .font(isIPad ? .title3 : .body)
+                                        .fontWeight(.medium)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(isIPad ? 18 : 15)
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(isIPad ? 12 : 10)
+                                }
+                                .padding(.horizontal)
+                                .accessibilityLabel("Select Image")
+                                .accessibilityHint("Opens your photo library to choose an image for alt text generation")
+                                .accessibilityIdentifier("selectImageButton")
                     .onChange(of: selectedItem) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self),
@@ -127,46 +149,56 @@ struct MainView: View {
                         }
                     }
                 
-                Button(action: generateAltText) {
-                    if isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.gray)
-                            .cornerRadius(10)
-                    } else {
-                        Label("Generate Alt Text", systemImage: "wand.and.rays")
-                            .font(.body)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(selectedImage != nil ? Color.green : Color.gray)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            Button(action: generateAltText) {
+                                if isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(isIPad ? 18 : 15)
+                                        .background(Color.gray)
+                                        .cornerRadius(isIPad ? 12 : 10)
+                                } else {
+                                    Label("Generate Alt Text", systemImage: "wand.and.rays")
+                                        .font(isIPad ? .title3 : .body)
+                                        .fontWeight(.medium)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(isIPad ? 18 : 15)
+                                        .background(selectedImage != nil ? Color.green : Color.gray)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(isIPad ? 12 : 10)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .disabled(selectedImage == nil || isLoading)
+                            .accessibilityLabel(isLoading ? "Generating alt text" : "Generate Alt Text")
+                            .accessibilityHint(generateButtonAccessibilityHint)
+                            .accessibilityIdentifier("generateAltTextButton")
+                            .accessibilityAddTraits(isLoading ? .updatesFrequently : [])
+                
+                            if !generatedText.isEmpty {
+                                generatedTextSection
+                            }
+                        }
+                        .padding(.vertical, isIPad ? 40 : 20)
                     }
+                    .frame(maxWidth: maxWidth)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(.horizontal)
-                .disabled(selectedImage == nil || isLoading)
-                .accessibilityLabel(isLoading ? "Generating alt text" : "Generate Alt Text")
-                .accessibilityHint(generateButtonAccessibilityHint)
-                .accessibilityIdentifier("generateAltTextButton")
-                .accessibilityAddTraits(isLoading ? .updatesFrequently : [])
-                
-                if !generatedText.isEmpty {
-                    generatedTextSection
-                }
-                
-                Spacer()
+                .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             }
             .navigationTitle("Alt Text Generator")
-            .navigationBarItems(trailing: Button(action: {
-                showSettings = true
-            }) {
-                Image(systemName: "gearshape")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                    .accessibilityHint("Opens app settings to configure your OpenAI API key and preferences")
+                    .accessibilityIdentifier("settingsButton")
+                }
             }
-            .accessibilityLabel("Settings")
-            .accessibilityHint("Opens app settings to configure your OpenAI API key and preferences")
-            .accessibilityIdentifier("settingsButton"))
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
