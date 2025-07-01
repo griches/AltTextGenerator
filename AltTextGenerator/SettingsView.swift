@@ -37,25 +37,25 @@ struct SettingsView: View {
                     
                     HStack {
                         Button("Save") {
-                            if apiKey.isEmpty {
+                            if apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 alertMessage = "Please enter an API key before saving"
-                            } else if KeychainService.shared.save(apiKey) {
-                                alertMessage = "API Key saved successfully"
+                            } else if KeychainService.shared.save(apiKey.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                                alertMessage = "API Key saved successfully! You can now generate alt text."
                             } else {
-                                alertMessage = "Failed to save API Key"
+                                alertMessage = "Failed to save API Key to secure storage"
                             }
                             showAlert = true
                         }
-                        .disabled(apiKey.isEmpty)
+                        .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         
                         Spacer()
                         
                         Button("Clear") {
+                            apiKey = ""
                             if KeychainService.shared.delete() {
-                                apiKey = ""
                                 alertMessage = "API Key removed successfully"
                             } else {
-                                alertMessage = "No API Key to clear"
+                                alertMessage = "API Key cleared from field"
                             }
                             showAlert = true
                         }

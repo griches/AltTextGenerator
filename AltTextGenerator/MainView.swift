@@ -22,20 +22,6 @@ struct MainView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                if !hasAPIKey {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                        Text("API key required. Tap ⚙️ to add one.")
-                            .font(.footnote)
-                            .foregroundColor(.orange)
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.1))
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                }
                 if let image = selectedImage {
                     Image(uiImage: image)
                         .resizable()
@@ -170,7 +156,7 @@ struct MainView: View {
             } catch {
                 await MainActor.run {
                     if error.localizedDescription.contains("API Key not found") {
-                        self.alertMessage = "No API key found. Please tap the settings icon (⚙️) in the top right to add your OpenAI API key."
+                        self.alertMessage = "No API key found. Please:\n\n1. Tap the settings icon (⚙️) in the top right\n2. Get an API key from platform.openai.com\n3. Enter your API key and tap Save\n4. Make sure you have credits in your OpenAI account"
                     } else {
                         self.alertMessage = error.localizedDescription
                     }
