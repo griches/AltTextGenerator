@@ -2,6 +2,19 @@
 
 An iOS/iPadOS app that generates descriptive alt text for images using OpenAI's Vision API. Built with SwiftUI and designed with accessibility in mind.
 
+## Features
+
+- **AI-Powered Alt Text Generation**: Uses OpenAI's GPT-4 Vision model to create detailed, accessible descriptions of images
+- **Multiple Image Support**: Process multiple images at once through the Shortcuts app
+- **Shortcuts Integration**: Seamlessly integrates with Apple Shortcuts with customizable detail levels
+- **Universal Design**: Optimized for both iPhone and iPad with adaptive layouts
+- **Accessibility First**: Full VoiceOver support with descriptive labels and hints
+- **Privacy Focused**: API keys stored securely in device keychain
+- **Auto-Generate Option**: Automatically generate alt text when selecting an image
+- **Auto-Copy Option**: Automatically copy generated text to clipboard
+- **Detail Level Control**: Choose between quick, normal, or detailed descriptions
+- **Smart API Key Setup**: Guided setup with automatic focus for accessibility
+
 ## Screenshots
 
 ### iPhone
@@ -20,19 +33,6 @@ An iOS/iPadOS app that generates descriptive alt text for images using OpenAI's 
   <img src="screenshots/ipad-generated-text.png" alt="iPad generated alt text result" width="400">
   <img src="screenshots/ipad-settings.png" alt="iPad settings screen" width="400">
 </div>
-
-## Features
-
-- **AI-Powered Alt Text Generation**: Uses OpenAI's GPT-4 Vision model to create detailed, accessible descriptions of images
-- **Multiple Image Support**: Process multiple images at once through the Shortcuts app
-- **Shortcuts Integration**: Seamlessly integrates with Apple Shortcuts with customizable detail levels
-- **Universal Design**: Optimized for both iPhone and iPad with adaptive layouts
-- **Accessibility First**: Full VoiceOver support with descriptive labels and hints
-- **Privacy Focused**: API keys stored securely in device keychain
-- **Auto-Generate Option**: Automatically generate alt text when selecting an image
-- **Auto-Copy Option**: Automatically copy generated text to clipboard
-- **Detail Level Control**: Choose between quick, normal, or detailed descriptions
-- **Smart API Key Setup**: Guided setup with automatic focus for accessibility
 
 ## Requirements
 
