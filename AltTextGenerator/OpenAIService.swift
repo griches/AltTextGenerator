@@ -59,7 +59,7 @@ class OpenAIService {
         let content: String
     }
     
-    func generateAltText(for image: UIImage) async throws -> String {
+    func generateAltText(for image: UIImage, detailLevel: AltTextDetailLevel = .normally) async throws -> String {
         guard let apiKey = KeychainService.shared.retrieve(), !apiKey.isEmpty else {
             throw NSError(domain: "OpenAIService", code: 401, userInfo: [NSLocalizedDescriptionKey: "API Key not found"])
         }
@@ -70,6 +70,8 @@ class OpenAIService {
         
         let base64Image = imageData.base64EncodedString()
         
+        let (prompt, maxTokens) = getPromptAndTokens(for: detailLevel)
+        
         let request = OpenAIRequest(
             model: "gpt-4o",
             messages: [
@@ -78,7 +80,7 @@ class OpenAIService {
                     content: [
                         Content(
                             type: "text",
-                            text: "Generate a concise and descriptive alt text for this image. The alt text should be suitable for accessibility purposes and describe the main content of the image in a clear, informative way.",
+                            text: prompt,
                             imageUrl: nil
                         ),
                         Content(
@@ -89,7 +91,7 @@ class OpenAIService {
                     ]
                 )
             ],
-            maxTokens: 150
+            maxTokens: maxTokens
         )
         
         var urlRequest = URLRequest(url: URL(string: baseURL)!)
@@ -111,5 +113,25 @@ class OpenAIService {
         }
         
         return altText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private func getPromptAndTokens(for detailLevel: AltTextDetailLevel) -> (prompt: String, maxTokens: Int) {
+        switch detailLevel {
+        case .quickly:
+            return (
+                prompt: "Generate a brief alt text for this image. Provide a concise description focusing only on the main subject. Maximum 1-2 sentences.",
+                maxTokens: 75
+            )
+        case .normally:
+            return (
+                prompt: "Generate a concise and descriptive alt text for this image. The alt text should be suitable for accessibility purposes and describe the main content of the image in a clear, informative way.",
+                maxTokens: 150
+            )
+        case .fully:
+            return (
+                prompt: "Generate a detailed and comprehensive alt text for this image. Include all important elements, their relationships, colors, emotions, and context. Provide a thorough description suitable for someone who cannot see the image.",
+                maxTokens: 300
+            )
+        }
     }
 }

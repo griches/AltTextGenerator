@@ -9,11 +9,24 @@ import AppIntents
 import UIKit
 import UniformTypeIdentifiers
 
+enum AltTextDetailLevel: String, AppEnum {
+    case quickly = "quickly"
+    case normally = "normally"
+    case fully = "fully"
+    
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Detail Level")
+    static var caseDisplayRepresentations: [AltTextDetailLevel: DisplayRepresentation] = [
+        .quickly: DisplayRepresentation(title: "Quickly", subtitle: "Describe quickly"),
+        .normally: DisplayRepresentation(title: "Normally", subtitle: "Describe in normal detail"),
+        .fully: DisplayRepresentation(title: "Fully", subtitle: "Describe fully")
+    ]
+}
+
 struct GenerateAltTextIntent: AppIntent {
     static var title: LocalizedStringResource = "Alt Text"
     static var description = IntentDescription("Generate alt text for one or more images using AI")
     static var parameterSummary: some ParameterSummary {
-        Summary("Generate alt text for \(\.$images)")
+        Summary("Generate alt text for \(\.$images). Describe \(\.$detailLevel)")
     }
     static var outputAttributionBundleIdentifier: String? = "mobi.bouncingball.AltTextGenerator"
     
@@ -22,6 +35,11 @@ struct GenerateAltTextIntent: AppIntent {
                supportedContentTypes: [.image],
                inputConnectionBehavior: .connectToPreviousIntentResult)
     var images: [IntentFile]
+    
+    @Parameter(title: "Detail Level",
+               description: "How detailed the alt text should be",
+               default: .normally)
+    var detailLevel: AltTextDetailLevel
     
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         guard !images.isEmpty else {
@@ -52,7 +70,7 @@ struct GenerateAltTextIntent: AppIntent {
                         throw GenerateAltTextError.failedToLoadImage
                     }
                     
-                    let altText = try await OpenAIService.shared.generateAltText(for: uiImage)
+                    let altText = try await OpenAIService.shared.generateAltText(for: uiImage, detailLevel: detailLevel)
                     return (index, altText)
                 }
             }
