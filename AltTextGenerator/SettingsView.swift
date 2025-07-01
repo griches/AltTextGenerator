@@ -16,6 +16,13 @@ struct SettingsView: View {
     @State private var hasAPIKey: Bool = false
     @State private var autoCopyToClipboard: Bool = false
     @State private var autoGenerateAltText: Bool = false
+    @FocusState private var isAPIKeyFieldFocused: Bool
+    
+    let shouldFocusAPIKey: Bool
+    
+    init(shouldFocusAPIKey: Bool = false) {
+        self.shouldFocusAPIKey = shouldFocusAPIKey
+    }
     
     var body: some View {
         NavigationStack {
@@ -31,6 +38,7 @@ struct SettingsView: View {
                                 TextField("sk-proj-...", text: $apiKey)
                                     .textFieldStyle(.roundedBorder)
                                     .font(.body)
+                                    .focused($isAPIKeyFieldFocused)
                                     .accessibilityLabel("API Key")
                                     .accessibilityHint("Enter your OpenAI API key here. The key is currently visible.")
                                     .accessibilityIdentifier("apiKeyTextField")
@@ -38,6 +46,7 @@ struct SettingsView: View {
                                 SecureField("Enter your OpenAI API key", text: $apiKey)
                                     .textFieldStyle(.roundedBorder)
                                     .font(.body)
+                                    .focused($isAPIKeyFieldFocused)
                                     .accessibilityLabel("API Key")
                                     .accessibilityHint("Enter your OpenAI API key here. The key is currently hidden for security.")
                                     .accessibilityIdentifier("apiKeySecureField")
@@ -72,18 +81,7 @@ struct SettingsView: View {
                 
                 Section("Actions") {
                     Button("Save API Key") {
-                        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if trimmedKey.isEmpty {
-                            alertMessage = "Please enter an API key before saving"
-                        } else if KeychainService.shared.save(trimmedKey) {
-                            alertMessage = "API Key saved successfully! You can now generate alt text."
-                            hasAPIKey = true
-                            // Announce success to VoiceOver
-                            UIAccessibility.post(notification: .announcement, argument: "API Key saved successfully")
-                        } else {
-                            alertMessage = "Failed to save API Key to secure storage"
-                        }
-                        showAlert = true
+                        saveAPIKey()
                     }
                     .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityLabel("Save API Key")
@@ -241,6 +239,14 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        // Auto-save API key if user has entered one but not saved it
+                        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let savedKey = KeychainService.shared.retrieve() ?? ""
+                        
+                        if !trimmedKey.isEmpty && trimmedKey != savedKey {
+                            let _ = KeychainService.shared.save(trimmedKey)
+                        }
+                        
                         dismiss()
                     }
                     .accessibilityLabel("Done")
@@ -263,6 +269,13 @@ struct SettingsView: View {
             }
             autoCopyToClipboard = UserDefaults.standard.bool(forKey: "autoCopyToClipboard")
             autoGenerateAltText = UserDefaults.standard.bool(forKey: "autoGenerateAltText")
+            
+            // Focus API key field if requested (for accessibility)
+            if shouldFocusAPIKey {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isAPIKeyFieldFocused = true
+                }
+            }
         }
         .onChange(of: autoCopyToClipboard) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: "autoCopyToClipboard")
@@ -271,8 +284,26 @@ struct SettingsView: View {
             UserDefaults.standard.set(newValue, forKey: "autoGenerateAltText")
         }
     }
+    
+    private func saveAPIKey() {
+        // Dismiss keyboard
+        isAPIKeyFieldFocused = false
+        
+        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedKey.isEmpty {
+            alertMessage = "Please enter an API key before saving"
+        } else if KeychainService.shared.save(trimmedKey) {
+            alertMessage = "API Key saved successfully! You can now generate alt text."
+            hasAPIKey = true
+            // Announce success to VoiceOver
+            UIAccessibility.post(notification: .announcement, argument: "API Key saved successfully")
+        } else {
+            alertMessage = "Failed to save API Key to secure storage"
+        }
+        showAlert = true
+    }
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(shouldFocusAPIKey: false)
 }

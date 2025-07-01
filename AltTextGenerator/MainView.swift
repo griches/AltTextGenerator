@@ -21,6 +21,9 @@ struct MainView: View {
     @State private var isCopied: Bool = false
     @State private var autoCopyEnabled: Bool = false
     @State private var autoGenerateEnabled: Bool = false
+    @AppStorage("selectedDetailLevel") private var selectedDetailLevel: String = AltTextDetailLevel.normally.rawValue
+    @State private var showAPIKeyAlert: Bool = false
+    @State private var shouldFocusAPIKeyField: Bool = false
     
     private var generateButtonAccessibilityHint: String {
         selectedImage == nil ? "Select an image first to generate alt text" : "Uses AI to create a description of your selected image"
@@ -149,6 +152,39 @@ struct MainView: View {
                         }
                     }
                 
+                            // Detail Level Selection
+                            VStack(spacing: 12) {
+                                HStack(spacing: isIPad ? 15 : 10) {
+                                    ForEach([AltTextDetailLevel.quickly, AltTextDetailLevel.normally, AltTextDetailLevel.fully], id: \.self) { level in
+                                        Button(action: {
+                                            selectedDetailLevel = level.rawValue
+                                        }) {
+                                            VStack(spacing: 4) {
+                                                Text(level.rawValue.capitalized)
+                                                    .font(isIPad ? .body : .subheadline)
+                                                    .fontWeight(selectedDetailLevel == level.rawValue ? .semibold : .regular)
+                                                Text(getDetailLevelDescription(for: level))
+                                                    .font(isIPad ? .caption : .caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, isIPad ? 12 : 10)
+                                            .padding(.horizontal, isIPad ? 10 : 8)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: isIPad ? 10 : 8)
+                                                    .fill(selectedDetailLevel == level.rawValue ? Color.blue : Color(UIColor.systemGray5))
+                                            )
+                                            .foregroundColor(selectedDetailLevel == level.rawValue ? .white : .primary)
+                                        }
+                                        .accessibilityLabel("\(level.rawValue.capitalized) detail level")
+                                        .accessibilityHint(getDetailLevelDescription(for: level))
+                                        .accessibilityAddTraits(selectedDetailLevel == level.rawValue ? .isSelected : [])
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                
                             Button(action: generateAltText) {
                                 if isLoading {
                                     ProgressView()
@@ -200,12 +236,21 @@ struct MainView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
+                SettingsView(shouldFocusAPIKey: shouldFocusAPIKeyField)
             }
             .alert("Alt Text Generator", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
+            }
+            .alert("API Key Required", isPresented: $showAPIKeyAlert) {
+                Button("OK") {
+                    shouldFocusAPIKeyField = true
+                    showSettings = true
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("An OpenAI API key is required to generate alt text. Would you like to enter it now?")
             }
             .onAppear {
                 checkForAPIKey()
@@ -214,6 +259,7 @@ struct MainView: View {
             }
             .onChange(of: showSettings) { _, newValue in
                 if !newValue {
+                    shouldFocusAPIKeyField = false
                     checkForAPIKey()
                     loadAutoCopySettings()
                     loadAutoGenerateSettings()
@@ -223,7 +269,13 @@ struct MainView: View {
     }
     
     private func checkForAPIKey() {
-        hasAPIKey = KeychainService.shared.retrieve() != nil
+        let apiKey = KeychainService.shared.retrieve()
+        hasAPIKey = apiKey != nil && !apiKey!.isEmpty
+        
+        // Show API key alert on first launch if no key is present
+        if !hasAPIKey {
+            showAPIKeyAlert = true
+        }
     }
     
     private func loadAutoCopySettings() {
@@ -242,7 +294,8 @@ struct MainView: View {
         
         Task {
             do {
-                let altText = try await OpenAIService.shared.generateAltText(for: image)
+                let detailLevel = AltTextDetailLevel(rawValue: selectedDetailLevel) ?? .normally
+                let altText = try await OpenAIService.shared.generateAltText(for: image, detailLevel: detailLevel)
                 await MainActor.run {
                     self.generatedText = altText
                     self.isLoading = false
@@ -285,6 +338,17 @@ struct MainView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 isCopied = false
             }
+        }
+    }
+    
+    private func getDetailLevelDescription(for level: AltTextDetailLevel) -> String {
+        switch level {
+        case .quickly:
+            return "Brief"
+        case .normally:
+            return "Standard"
+        case .fully:
+            return "Detailed"
         }
     }
 }

@@ -6,12 +6,14 @@ An iOS/iPadOS app that generates descriptive alt text for images using OpenAI's 
 
 - **AI-Powered Alt Text Generation**: Uses OpenAI's GPT-4 Vision model to create detailed, accessible descriptions of images
 - **Multiple Image Support**: Process multiple images at once through the Shortcuts app
-- **Shortcuts Integration**: Seamlessly integrates with Apple Shortcuts for automation workflows
+- **Shortcuts Integration**: Seamlessly integrates with Apple Shortcuts with customizable detail levels
 - **Universal Design**: Optimized for both iPhone and iPad with adaptive layouts
 - **Accessibility First**: Full VoiceOver support with descriptive labels and hints
 - **Privacy Focused**: API keys stored securely in device keychain
 - **Auto-Generate Option**: Automatically generate alt text when selecting an image
 - **Auto-Copy Option**: Automatically copy generated text to clipboard
+- **Detail Level Control**: Choose between quick, normal, or detailed descriptions
+- **Smart API Key Setup**: Guided setup with automatic focus for accessibility
 
 ## Requirements
 
@@ -43,13 +45,15 @@ To get an OpenAI API key:
 
 ### In-App Usage
 1. Tap "Select Image" to choose a photo from your library
-2. Tap "Generate Alt Text" to create the description
-3. Review the generated text
-4. Tap "Copy to Clipboard" to copy the text
+2. Choose your preferred detail level (Quickly, Normally, or Fully)
+3. Tap "Generate Alt Text" to create the description
+4. Review the generated text
+5. Tap "Copy to Clipboard" to copy the text
 
 ### Shortcuts Integration
 The app provides a "Generate Alt Text" action for Shortcuts:
 - Process single or multiple images
+- Choose detail level: Quickly (brief), Normally (standard), or Fully (detailed)
 - Returns combined alt text for all images
 - Supports automation workflows
 
@@ -68,6 +72,7 @@ Example Shortcuts uses:
 ## Settings
 
 - **API Key**: Your OpenAI API key (required)
+- **Detail Level**: Default detail level for alt text generation (Quick/Normal/Full)
 - **Auto-generate alt text**: Generate immediately after selecting an image
 - **Auto-copy to clipboard**: Copy generated text automatically
 
@@ -92,6 +97,16 @@ The app is fully accessible with VoiceOver:
 This project is available under the MIT License.
 
 ## Version History
+
+### v1.1.0
+- **Detail Level Control**: Added three detail levels for customized alt text generation
+  - Quickly: Brief, concise descriptions (1-2 sentences)
+  - Normally: Standard descriptive text (default)
+  - Fully: Comprehensive, detailed descriptions
+- **Enhanced Shortcuts**: Detail level parameter now available in Shortcuts integration
+- **Improved Accessibility**: Auto-focus API key field when prompted for better VoiceOver experience
+- **Better UX**: Automatic keyboard dismissal and API key saving improvements
+- **Smart Setup**: Startup alert guides new users to enter API key immediately
 
 ### v1.0.0
 - Initial release
