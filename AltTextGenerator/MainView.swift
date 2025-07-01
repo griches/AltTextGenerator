@@ -1,0 +1,193 @@
+//
+//  MainView.swift
+//  AltTextGenerator
+//
+//  Created by Gary Riches on 01/07/2025.
+//
+
+import SwiftUI
+import PhotosUI
+
+struct MainView: View {
+    @State private var selectedImage: UIImage?
+    @State private var generatedText: String = ""
+    @State private var isLoading: Bool = false
+    @State private var showImagePicker: Bool = false
+    @State private var showSettings: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var hasAPIKey: Bool = false
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                if !hasAPIKey {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text("API key required. Tap ⚙️ to add one.")
+                            .font(.footnote)
+                            .foregroundColor(.orange)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                }
+                if let image = selectedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 300)
+                        .cornerRadius(10)
+                        .padding()
+                } else {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 300)
+                        .overlay(
+                            VStack {
+                                Image(systemName: "photo")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.gray)
+                                Text("No image selected")
+                                    .foregroundColor(.gray)
+                            }
+                        )
+                        .padding()
+                }
+                
+                PhotosPicker(
+                    selection: $selectedItem,
+                    matching: .images,
+                    photoLibrary: .shared()) {
+                        Label("Select Image", systemImage: "photo")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .onChange(of: selectedItem) { _, newValue in
+                        Task {
+                            if let data = try? await newValue?.loadTransferable(type: Data.self),
+                               let image = UIImage(data: data) {
+                                selectedImage = image
+                                generatedText = ""
+                            }
+                        }
+                    }
+                
+                Button(action: generateAltText) {
+                    if isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray)
+                            .cornerRadius(10)
+                    } else {
+                        Label("Generate Alt Text", systemImage: "wand.and.rays")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(selectedImage != nil ? Color.green : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                }
+                .padding(.horizontal)
+                .disabled(selectedImage == nil || isLoading)
+                
+                if !generatedText.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Generated Alt Text:")
+                            .font(.headline)
+                        
+                        Text(generatedText)
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(10)
+                        
+                        Button(action: copyToClipboard) {
+                            Label("Copy to Clipboard", systemImage: "doc.on.doc")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                
+                Spacer()
+            }
+            .navigationTitle("Alt Text Generator")
+            .navigationBarItems(trailing: Button(action: {
+                showSettings = true
+            }) {
+                Image(systemName: "gearshape")
+            })
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
+            .alert("Alt Text Generator", isPresented: $showAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(alertMessage)
+            }
+            .onAppear {
+                checkForAPIKey()
+            }
+            .onChange(of: showSettings) { _, newValue in
+                if !newValue {
+                    checkForAPIKey()
+                }
+            }
+        }
+    }
+    
+    private func checkForAPIKey() {
+        hasAPIKey = KeychainService.shared.retrieve() != nil
+    }
+    
+    private func generateAltText() {
+        guard let image = selectedImage else { return }
+        
+        isLoading = true
+        generatedText = ""
+        
+        Task {
+            do {
+                let altText = try await OpenAIService.shared.generateAltText(for: image)
+                await MainActor.run {
+                    self.generatedText = altText
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    if error.localizedDescription.contains("API Key not found") {
+                        self.alertMessage = "No API key found. Please tap the settings icon (⚙️) in the top right to add your OpenAI API key."
+                    } else {
+                        self.alertMessage = error.localizedDescription
+                    }
+                    self.showAlert = true
+                    self.isLoading = false
+                }
+            }
+        }
+    }
+    
+    private func copyToClipboard() {
+        UIPasteboard.general.string = generatedText
+        alertMessage = "Alt text copied to clipboard!"
+        showAlert = true
+    }
+}
+
+#Preview {
+    MainView()
+}

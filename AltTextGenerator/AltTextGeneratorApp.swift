@@ -6,9 +6,14 @@
 //
 
 import SwiftUI
+import AppIntents
 
 @main
 struct AltTextGeneratorApp: App {
+    init() {
+        AltTextGeneratorShortcuts.updateAppShortcutParameters()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
