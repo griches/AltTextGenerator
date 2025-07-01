@@ -22,14 +22,27 @@ class KeychainService {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
-            kSecAttrAccount: account,
+            kSecAttrAccount: account
+        ]
+        
+        let attributes: [CFString: Any] = [
             kSecValueData: data
         ]
         
-        SecItemDelete(query as CFDictionary)
+        // Try to update first
+        let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
         
-        let status = SecItemAdd(query as CFDictionary, nil)
-        return status == errSecSuccess
+        if updateStatus == errSecSuccess {
+            return true
+        } else if updateStatus == errSecItemNotFound {
+            // Item doesn't exist, add it
+            var addQuery = query
+            addQuery[kSecValueData] = data
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            return addStatus == errSecSuccess
+        } else {
+            return false
+        }
     }
     
     func retrieve() -> String? {

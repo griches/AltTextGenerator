@@ -51,10 +51,11 @@ struct SettingsView: View {
                         Spacer()
                         
                         Button("Clear") {
-                            apiKey = ""
                             if KeychainService.shared.delete() {
+                                apiKey = ""
                                 alertMessage = "API Key removed successfully"
                             } else {
+                                apiKey = ""
                                 alertMessage = "API Key cleared from field"
                             }
                             showAlert = true
