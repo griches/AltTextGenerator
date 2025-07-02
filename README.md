@@ -117,7 +117,7 @@ This project is available under the MIT License.
 
 ## Version History
 
-### v1.1.0
+### v1.0
 - **Detail Level Control**: Added three detail levels for customized alt text generation
   - Quickly: Brief, concise descriptions (1-2 sentences)
   - Normally: Standard descriptive text (default)
