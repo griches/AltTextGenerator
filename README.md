@@ -122,7 +122,9 @@ This project is available under the MIT License.
   - Quickly: Brief, concise descriptions (1-2 sentences)
   - Normally: Standard descriptive text (default)
   - Fully: Comprehensive, detailed descriptions
-- **Enhanced Shortcuts**: Detail level parameter now available in Shortcuts integration
+- **Enhanced Shortcuts**: Two new parameters for Shortcuts integration
+  - Detail Level: Choose between Quick, Normal, or Full descriptions
+  - Focus on: Select "Whole Screen" (default) or "Large Images" for focused descriptions
 - **Improved Accessibility**: Auto-focus API key field when prompted for better VoiceOver experience
 - **Better UX**: Automatic keyboard dismissal and API key saving improvements
 - **Smart Setup**: Startup alert guides new users to enter API key immediately

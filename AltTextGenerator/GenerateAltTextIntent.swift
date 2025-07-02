@@ -22,11 +22,22 @@ enum AltTextDetailLevel: String, AppEnum {
     ]
 }
 
+enum AltTextFocusLevel: String, AppEnum {
+    case wholeScreen = "whole screen"
+    case largeImages = "large images"
+    
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Focus on")
+    static var caseDisplayRepresentations: [AltTextFocusLevel: DisplayRepresentation] = [
+        .wholeScreen: DisplayRepresentation(title: "Whole Screen", subtitle: "Describe entire image"),
+        .largeImages: DisplayRepresentation(title: "Large Images", subtitle: "Focus on prominent elements")
+    ]
+}
+
 struct GenerateAltTextIntent: AppIntent {
     static var title: LocalizedStringResource = "Alt Text"
     static var description = IntentDescription("Generate alt text for one or more images using AI")
     static var parameterSummary: some ParameterSummary {
-        Summary("Generate alt text for \(\.$images). Describe \(\.$detailLevel)")
+        Summary("Generate alt text for \(\.$images). Describe \(\.$detailLevel), focus on \(\.$focusLevel)")
     }
     static var outputAttributionBundleIdentifier: String? = "mobi.bouncingball.AltTextGenerator"
     
@@ -40,6 +51,11 @@ struct GenerateAltTextIntent: AppIntent {
                description: "How detailed the alt text should be",
                default: .normally)
     var detailLevel: AltTextDetailLevel
+    
+    @Parameter(title: "Focus on",
+               description: "What to focus on when describing the image",
+               default: .wholeScreen)
+    var focusLevel: AltTextFocusLevel
     
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         guard !images.isEmpty else {
