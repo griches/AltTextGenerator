@@ -295,7 +295,7 @@ struct MainView: View {
         Task {
             do {
                 let detailLevel = AltTextDetailLevel(rawValue: selectedDetailLevel) ?? .normally
-                let altText = try await OpenAIService.shared.generateAltText(for: image, detailLevel: detailLevel)
+                let altText = try await OpenAIService.shared.generateAltText(for: image, detailLevel: detailLevel, focusLevel: .wholeScreen)
                 await MainActor.run {
                     self.generatedText = altText
                     self.isLoading = false

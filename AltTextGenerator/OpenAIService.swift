@@ -59,7 +59,7 @@ class OpenAIService {
         let content: String
     }
     
-    func generateAltText(for image: UIImage, detailLevel: AltTextDetailLevel = .normally) async throws -> String {
+    func generateAltText(for image: UIImage, detailLevel: AltTextDetailLevel = .normally, focusLevel: AltTextFocusLevel = .wholeScreen) async throws -> String {
         guard let apiKey = KeychainService.shared.retrieve(), !apiKey.isEmpty else {
             throw NSError(domain: "OpenAIService", code: 401, userInfo: [NSLocalizedDescriptionKey: "API Key not found"])
         }
@@ -70,7 +70,7 @@ class OpenAIService {
         
         let base64Image = imageData.base64EncodedString()
         
-        let (prompt, maxTokens) = getPromptAndTokens(for: detailLevel)
+        let (prompt, maxTokens) = getPromptAndTokens(for: detailLevel, focusLevel: focusLevel)
         
         let request = OpenAIRequest(
             model: "gpt-4o",
@@ -115,23 +115,34 @@ class OpenAIService {
         return altText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    private func getPromptAndTokens(for detailLevel: AltTextDetailLevel) -> (prompt: String, maxTokens: Int) {
+    private func getPromptAndTokens(for detailLevel: AltTextDetailLevel, focusLevel: AltTextFocusLevel) -> (prompt: String, maxTokens: Int) {
+        let focusInstruction = getFocusInstruction(for: focusLevel)
+        
         switch detailLevel {
         case .quickly:
             return (
-                prompt: "Generate a brief alt text for this image. Provide a concise description focusing only on the main subject. Maximum 1-2 sentences.",
+                prompt: "Generate a brief alt text for this image. Provide a concise description focusing only on the main subject. Maximum 1-2 sentences. \(focusInstruction)",
                 maxTokens: 75
             )
         case .normally:
             return (
-                prompt: "Generate a concise and descriptive alt text for this image. The alt text should be suitable for accessibility purposes and describe the main content of the image in a clear, informative way.",
+                prompt: "Generate a concise and descriptive alt text for this image. The alt text should be suitable for accessibility purposes and describe the main content of the image in a clear, informative way. \(focusInstruction)",
                 maxTokens: 150
             )
         case .fully:
             return (
-                prompt: "Generate a detailed and comprehensive alt text for this image. Include all important elements, their relationships, colors, emotions, and context. Provide a thorough description suitable for someone who cannot see the image.",
+                prompt: "Generate a detailed and comprehensive alt text for this image. Include all important elements, their relationships, colors, emotions, and context. Provide a thorough description suitable for someone who cannot see the image. \(focusInstruction)",
                 maxTokens: 300
             )
+        }
+    }
+    
+    private func getFocusInstruction(for focusLevel: AltTextFocusLevel) -> String {
+        switch focusLevel {
+        case .wholeScreen:
+            return "Describe the entire image, including background elements, overall composition, and spatial relationships."
+        case .largeImages:
+            return "Focus primarily on the most prominent, large, or important visual elements. Give less attention to small details or background elements."
         }
     }
 }

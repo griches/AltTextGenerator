@@ -86,7 +86,7 @@ struct GenerateAltTextIntent: AppIntent {
                         throw GenerateAltTextError.failedToLoadImage
                     }
                     
-                    let altText = try await OpenAIService.shared.generateAltText(for: uiImage, detailLevel: detailLevel)
+                    let altText = try await OpenAIService.shared.generateAltText(for: uiImage, detailLevel: detailLevel, focusLevel: focusLevel)
                     return (index, altText)
                 }
             }

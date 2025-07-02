@@ -73,6 +73,7 @@ To get an OpenAI API key:
 The app provides a "Generate Alt Text" action for Shortcuts:
 - Process single or multiple images
 - Choose detail level: Quickly (brief), Normally (standard), or Fully (detailed)
+- Select focus level: Whole Screen (comprehensive) or Large Images (main subjects only)
 - Returns combined alt text for all images
 - Supports automation workflows
 
@@ -117,17 +118,22 @@ This project is available under the MIT License.
 
 ## Version History
 
-### v1.0
+### v1.1.0
 - **Detail Level Control**: Added three detail levels for customized alt text generation
   - Quickly: Brief, concise descriptions (1-2 sentences)
   - Normally: Standard descriptive text (default)
   - Fully: Comprehensive, detailed descriptions
-- **Enhanced Shortcuts**: Two new parameters for Shortcuts integration
+- **Focus Control**: New focus level parameter affects AI description approach
+  - Whole Screen: Describes entire image including background and composition
+  - Large Images: Focuses on prominent elements, less background detail
+- **Enhanced Shortcuts**: Two functional parameters for Shortcuts integration
   - Detail Level: Choose between Quick, Normal, or Full descriptions
-  - Focus on: Select "Whole Screen" (default) or "Large Images" for focused descriptions
+  - Focus Level: Select comprehensive or focused description approach
 - **Improved Accessibility**: Auto-focus API key field when prompted for better VoiceOver experience
 - **Better UX**: Automatic keyboard dismissal and API key saving improvements
 - **Smart Setup**: Startup alert guides new users to enter API key immediately
+
+### v1.0.0
 - Initial release
 - Core alt text generation functionality
 - Shortcuts integration with multiple image support
