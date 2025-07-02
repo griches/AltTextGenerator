@@ -126,8 +126,6 @@ This project is available under the MIT License.
 - **Improved Accessibility**: Auto-focus API key field when prompted for better VoiceOver experience
 - **Better UX**: Automatic keyboard dismissal and API key saving improvements
 - **Smart Setup**: Startup alert guides new users to enter API key immediately
-
-### v1.0.0
 - Initial release
 - Core alt text generation functionality
 - Shortcuts integration with multiple image support
